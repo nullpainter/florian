@@ -4,6 +4,8 @@
 Speakjet::Speakjet(int isSpeakingPin, int txPin) {
   this->isSpeakingPin = isSpeakingPin;
 
+  pinMode(isSpeakingPin, INPUT);
+
   // Wait for Speakjet to be ready
   while (!(PINB & 0x01));
 
@@ -37,5 +39,37 @@ void Speakjet::demo() {
 
   while (isSpeaking());
   delay(1000);
+}
+
+bool Speakjet::isEndOfPhrase() {
+  return endOfPhrase;
+}
+
+void Speakjet::speak(byte buffer[]) {
+  endOfPhrase = false;
+
+  for (int i = 0; buffer[i] != END_OF_PHRASE; i++) {
+
+    // Wait until Speakjet has finished speaking between words so we can fade out the LED
+    if (buffer[i] == 0) {
+      while (isSpeaking());
+    }
+
+    // Write byte to Speakjet
+    speak(buffer[i]);
+  }
+
+  endOfPhrase = true;
+}
+
+void Speakjet::poll() {
+ 
+  // RawHID packets are always 64 bytes
+  byte buffer[64];
+
+  int numBytes = RawHID.recv(buffer, 0);
+  if (numBytes > 0) {
+    speak(buffer);
+  }
 }
 
