@@ -1,3 +1,4 @@
+#include <iostream>
 #include "dictionary.h"
 #include "utility.h"
 #include "speakjet_lookup.h"
