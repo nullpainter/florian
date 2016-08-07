@@ -1,4 +1,8 @@
+#pragma once
+
 #include <SoftwareSerial.h>
+#include "Arduino.h"
+
 #define END_OF_PHRASE 255
 
 class Speakjet {
@@ -6,8 +10,9 @@ class Speakjet {
     Speakjet(int isSpeakingPin, int txPin);
     ~Speakjet();
 
+    volatile bool endOfPhrase = false;
+
     bool isSpeaking();
-    bool isEndOfPhrase();
     void speak(byte command);
     void speak(byte buffer[]);
     void poll();
@@ -15,11 +20,7 @@ class Speakjet {
 
   private:
     SoftwareSerial *serial;
-    volatile bool endOfPhrase = false;
- 
-    // RawHID packets are always 64 bytes
-    byte buffer[64];
-
+    
     int isSpeakingPin;
     bool bufferReady();
 };

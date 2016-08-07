@@ -1,7 +1,8 @@
-#include <LEDFader.h>
-#define LED_PULSE_MS 500
+#pragma once
 
-// 
+#include <LEDFader.h>
+
+#define LED_PULSE_MS 500
 #define FADE_TIME 150
 
 class Led {

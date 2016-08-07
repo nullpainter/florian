@@ -5,6 +5,7 @@
 
 #include "Speakjet.h"
 #include "Led.h"
+#include "Conductor.h"
 
 #define RED_LED_PIN 5
 #define BLUE_LED_PIN 4
@@ -20,9 +21,11 @@ Speakjet speakjet = Speakjet(SPEAKING_PIN, TX_PIN);
 Led redLed = Led(RED_LED_PIN);
 Led blueLed = Led(BLUE_LED_PIN);
 
+Conductor conductor = Conductor(&speakjet, &redLed, &blueLed);
+
 /*
- * If startup routing is running
- */
+   If startup routing is running
+*/
 volatile bool startup = false;
 
 void setup() {
@@ -55,12 +58,12 @@ void setup() {
 }
 
 void loop() {
-  speakjet.poll();
+  conductor.poll();
 }
 
 /*
- * Blinks red LED at regular intervals and blue LED while the Speechjet is speaking a word
- */
+   Blinks red LED at regular intervals and blue LED while the Speechjet is speaking a word
+*/
 void speechIndicator() {
 
   // Update LED state
@@ -71,7 +74,7 @@ void speechIndicator() {
   if (startup || speakjet.isSpeaking()) redLed.pulse();
 
   // If the current phrase has ended, fade out the red LED
-  if (speakjet.isEndOfPhrase() && redLed.readyForLedPulse()) redLed.fade((bool)false, FADE_TIME);
+  if (speakjet.endOfPhrase && redLed.readyForLedPulse()) redLed.fade((bool)false, FADE_TIME);
 
   // Pulse blue LED with speech
   blueLed.fade(speakjet.isSpeaking(), FADE_TIME);
@@ -83,6 +86,8 @@ void startupAnimation() {
   startup = false;
 
   // "Ready"
-  byte buffer[64] = { 201, 200, 202, 203, 0, 0, 148 , 131, 177, 128, 255 };
-  speakjet.speak(buffer);
+  byte buffer[] = { 201, 200, 202, 203, 0, 0, 148, 131, 177, 128, 255 };
+  for (int i = 0; i < (int)sizeof(buffer); i++) {
+    speakjet.speak(buffer[i]);
+  }
 }

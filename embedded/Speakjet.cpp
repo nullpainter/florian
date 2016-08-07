@@ -17,10 +17,18 @@ Speakjet::~Speakjet() {
   // delete serial;
 }
 
+/*
+ * Determines if the Speakjet buffer is half full
+ */
 bool Speakjet::bufferReady() {
+
+  // TODO parameterise this
   return (PINB & (1 << 1)) == LOW;
 }
 
+/*
+ * Determines if the Speakjet is currently speaking
+ */
 bool Speakjet::isSpeaking() {
   return digitalRead(isSpeakingPin) == HIGH;
 }
@@ -29,8 +37,19 @@ void Speakjet::speak(byte command) {
   while (!bufferReady());
 
   serial->write(command);
+
+   // Wait until Speakjet has finished speaking between words so we can fade out the LED. Speakjet
+    // codes 0-6 are pause codes.
+    if (command <= 6) {
+      while (isSpeaking());
+    }
 }
 
+
+
+/*
+ * Plays all Speakjet sounds
+ */
 void Speakjet::demo() {
   // 200 = sound effects, 128 = all sounds
   for (int i = 128; i <= 254; i++) {
@@ -40,36 +59,3 @@ void Speakjet::demo() {
   while (isSpeaking());
   delay(1000);
 }
-
-bool Speakjet::isEndOfPhrase() {
-  return endOfPhrase;
-}
-
-void Speakjet::speak(byte buffer[]) {
-  endOfPhrase = false;
-
-  for (int i = 0; buffer[i] != END_OF_PHRASE; i++) {
-
-    // Wait until Speakjet has finished speaking between words so we can fade out the LED
-    if (buffer[i] == 0) {
-      while (isSpeaking());
-    }
-
-    // Write byte to Speakjet
-    speak(buffer[i]);
-  }
-
-  endOfPhrase = true;
-}
-
-void Speakjet::poll() {
- 
-  // RawHID packets are always 64 bytes
-  byte buffer[64];
-
-  int numBytes = RawHID.recv(buffer, 0);
-  if (numBytes > 0) {
-    speak(buffer);
-  }
-}
-
