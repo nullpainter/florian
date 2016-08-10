@@ -43,6 +43,8 @@ void Speakjet::speak(byte command) {
     if (command <= 6) {
       while (isSpeaking());
     }
+
+    if (command == END_OF_PHRASE) endOfPhrase = true;
 }
 
 

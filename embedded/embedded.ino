@@ -28,6 +28,8 @@ Conductor conductor = Conductor(&speakjet, &redLed, &blueLed);
 */
 volatile bool startup = false;
 
+AnimationStep pulseAnimation[1];
+
 void setup() {
 
   pinMode(RED_LED_PIN, OUTPUT);
@@ -37,21 +39,16 @@ void setup() {
   Serial.begin(9600);
   Serial.println(F("Florian Serial Interface"));
 
-  // Light placement test
-  if (false) {
-    digitalWrite(RED_LED_PIN, HIGH);
-    digitalWrite(BLUE_LED_PIN, HIGH);
-    while (true);
-  }
-
   // Turn on Teensy LED
   digitalWrite(11, HIGH);
+
+  pulseAnimation[0] = AnimationStep(1000, 1000, 500);
 
   // Start speech LED poll function
   Timer1.initialize(250);
   Timer1.attachInterrupt(speechIndicator);
 
-  // speakjet.demo();
+  //speakjet.demo();
 
   // Start superfluous startup routine
   startupAnimation();
@@ -70,23 +67,39 @@ void speechIndicator() {
   blueLed.update();
   redLed.update();
 
-  // Pulse the red LED at startup and during speech
-  if (startup || speakjet.isSpeaking()) redLed.pulse();
+  // Pulse the red LED during speech
+  if (speakjet.isSpeaking()) redLed.startAnimation();
 
   // If the current phrase has ended, fade out the red LED
-  if (speakjet.endOfPhrase && redLed.readyForLedPulse()) redLed.fade((bool)false, FADE_TIME);
+  if (speakjet.endOfPhrase) redLed.stopAnimation();
 
   // Pulse blue LED with speech
-  blueLed.fade(speakjet.isSpeaking(), FADE_TIME);
+  if (!startup) blueLed.fade(speakjet.isSpeaking(), FADE_TIME);
 }
+
+
+AnimationStep animation[7];
 
 void startupAnimation() {
   startup = true;
-  delay(LED_PULSE_MS * 4);
+  redLed.animate(pulseAnimation, sizeof(pulseAnimation) / sizeof(pulseAnimation[0]), true);
+
+  animation[0]  = AnimationStep(500, 250, 0, 0); // Startup delay
+  animation[1] =  AnimationStep(125, 250);
+  animation[2] =  AnimationStep(125, 50);
+  animation[3] =  AnimationStep(125, 250);
+  animation[4] =  AnimationStep(25, 50);
+  animation[5] =  AnimationStep(25, 50);
+  animation[6] =  AnimationStep(500, 1000, 500);
+
+  blueLed.animate(animation, sizeof(animation) / sizeof(animation[0]));
+  while (blueLed.sequenceRunning);
+
+  redLed.stopAnimation();
   startup = false;
 
   // "Ready"
-  byte buffer[] = { 201, 200, 202, 203, 0, 0, 148, 131, 177, 128, 255 };
+  byte buffer[] = { 20, 96, 201, 200, 202, 203, 0, 0, 148, 131, 177, 128, 255 };
   for (int i = 0; i < (int)sizeof(buffer); i++) {
     speakjet.speak(buffer[i]);
   }

@@ -15,29 +15,32 @@ void Conductor::poll() {
   if (numBytes == 0) return;
 
   speakjet->endOfPhrase = false;
+  bool redOn = false;
+  bool blueOn = false;
 
-  Serial.println("Command:");
-
-  for (int i = 0; buffer[i] != END_OF_PHRASE; i++) {
+  for (int i = 0; i < (int)sizeof(buffer); i++) {
     byte command = buffer[i];
-    Serial.print(command);
-    Serial.println(" ");
-
-
+   
     // Some Speakjet command codes are two byte commands
     if ((i == 0 || !isSpeakjetCommand(buffer[i - 1])) && isReservedCode(command)) {
-      // DO led stuff
+      switch(command) {
+        case RED_ON:
+        redOn = true;
+        break;
+        case BLUE_ON:
+        blueOn = true;
+        break;
+        case LED_DURATION:
+          // todo netx buyte is the duration
+            break;
+      }
     }
     else {
       speakjet->speak(command);
     }
+
+    if (command == END_OF_PHRASE) break;
   }
-
-  speakjet->speak(END_OF_PHRASE);
-
-  Serial.println("------");
-
-  speakjet->endOfPhrase = true;
 }
 
 bool Conductor::isSpeakjetCommand(byte command) {
