@@ -1,0 +1,1 @@
+$("body .body_wrapper").css("background", "red")
